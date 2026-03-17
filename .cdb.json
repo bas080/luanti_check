@@ -1,0 +1,11 @@
+{
+   "$author" : "bas080",
+   "$version" : "0.0.0",
+   "dev_state" : "ACTIVELY_DEVELOPED",
+   "license" : "LGPL-2.1-only",
+   "media_license" : "LGPL-2.1-only",
+   "name" : "luanti_check",
+   "short_description" : "Generative testing for Luanti",
+   "title" : "luanti_check",
+   "type" : "MOD"
+}
