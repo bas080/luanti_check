@@ -172,21 +172,32 @@ function gen.item_name()
     return gen.pick_key(core.registered_items)
 end
 
-function gen.vector(params)
-    params = params or {}
-    local minp = params.minp or vector.new(-100, -10, -100)
-    local maxp = params.maxp or vector.new(100, 50, 100)
 
-    return vector.new(math.random(minp.x, maxp.x), math.random(minp.y, maxp.y), math.random(minp.z, maxp.z))
+local function vector_random_direction()
+    -- Generate a random point on the unit sphere
+    local theta = math.random() * 2 * math.pi      -- azimuthal angle
+    local phi = math.acos(2 * math.random() - 1)   -- polar angle
+
+    -- Convert spherical coordinates to Cartesian
+    local x = math.sin(phi) * math.cos(theta)
+    local y = math.sin(phi) * math.sin(theta)
+    local z = math.cos(phi)
+
+    return vector.new(x, y, z)
+end
+
+function gen.vector(multiplier)
+    multiplier = multiplier or 1000
+    return vector.floor(vector_random_direction() * multiplier)
 end
 
 --- when
 -- @function gen.when
 -- @tparam boolean bool
 -- @raise When the predicate is not true the when fn throws.
-function gen.where(bool)
-    if bool == false then
-        gen_error("Does not comply with when predicate")
+function gen.where(result)
+    if result == false then
+        gen_error("Does not comply with predicate result")
     end
 end
 
@@ -244,8 +255,9 @@ local function property(name, ...)
     local run_count = 0 -- resets on restart
     local total_runs = 0 -- never resets
 
+    -- These should be configurable either on property or luanti_check level.
     local restart_threshold = 1
-    local fail_threshold = 1000
+    local fail_threshold = 10000
 
     print("[luanti_check] Running property:", name)
 
@@ -304,24 +316,33 @@ end
 function gen.player_pos(param)
     param = param or {}
 
-    local player = gen.player(param)
-    local pos = gen.pos(param)
+    local player = param.player or gen.player()
+    local pos = gen.pos(param.pos or {})
 
     player:set_pos(pos)
 
     return player, pos
 end
 
--- Alias for gen.vector
-function gen.pos(param)
-    param = param or {}
-    local player_pos = (param.player or gen.player()):get_pos()
-    local pos = vector.add(player_pos, gen.vector())
 
-    -- figure this out
-    pos.y = param.pos.y
+local function table_merge(left, right)
+    if not left then return right end
+    if not right then return left end
 
-    return pos
+    local result = {}
+    -- Copy left table
+    for k, v in pairs(left) do
+        result[k] = v
+    end
+    -- Overwrite with right table
+    for k, v in pairs(right) do
+        result[k] = v
+    end
+    return result
+end
+
+function gen.pos(pos)
+    return table_merge(gen.vector(), pos)
 end
 
 core.register_chatcommand("check", {
